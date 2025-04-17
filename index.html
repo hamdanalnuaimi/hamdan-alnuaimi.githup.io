@@ -1,0 +1,611 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="ar">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تحليل مجموعة بيانات Adult</title>
+    <style>
+        :root {
+            --primary-color: #3498db;
+            --secondary-color: #2c3e50;
+            --accent-color: #e74c3c;
+            --light-color: #ecf0f1;
+            --dark-color: #34495e;
+            --text-color: #333;
+            --light-text: #f8f9fa;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: var(--text-color);
+            background-color: var(--light-color);
+            direction: rtl;
+        }
+        
+        header {
+            background-color: var(--primary-color);
+            color: white;
+            text-align: center;
+            padding: 2rem 0;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        
+        header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        header p {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+        
+        nav {
+            background-color: var(--secondary-color);
+            padding: 1rem;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        
+        nav ul {
+            display: flex;
+            justify-content: center;
+            list-style: none;
+            flex-wrap: wrap;
+        }
+        
+        nav ul li {
+            margin: 0 1rem;
+        }
+        
+        nav ul li a {
+            color: white;
+            text-decoration: none;
+            font-weight: bold;
+            transition: color 0.3s;
+            font-size: 1.1rem;
+        }
+        
+        nav ul li a:hover {
+            color: var(--accent-color);
+        }
+        
+        main {
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+        }
+        
+        section {
+            background-color: white;
+            border-radius: 8px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        h2 {
+            color: var(--secondary-color);
+            margin-bottom: 1.5rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid var(--primary-color);
+        }
+        
+        h3 {
+            color: var(--dark-color);
+            margin: 1.5rem 0 1rem;
+        }
+        
+        p {
+            margin-bottom: 1rem;
+            text-align: justify;
+        }
+        
+        .visualization {
+            margin: 2rem 0;
+            text-align: center;
+        }
+        
+        .visualization img {
+            max-width: 100%;
+            border-radius: 8px;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.2);
+            transition: transform 0.3s;
+        }
+        
+        .visualization img:hover {
+            transform: scale(1.02);
+        }
+        
+        .visualization h4 {
+            margin-top: 1rem;
+            color: var(--dark-color);
+        }
+        
+        .visualization-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin: 2rem 0;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1.5rem 0;
+        }
+        
+        table, th, td {
+            border: 1px solid #ddd;
+        }
+        
+        th, td {
+            padding: 12px;
+            text-align: right;
+        }
+        
+        th {
+            background-color: var(--primary-color);
+            color: white;
+        }
+        
+        tr:nth-child(even) {
+            background-color: #f2f2f2;
+        }
+        
+        .highlight {
+            background-color: rgba(231, 76, 60, 0.1);
+            padding: 1rem;
+            border-right: 4px solid var(--accent-color);
+            margin: 1.5rem 0;
+        }
+        
+        footer {
+            background-color: var(--secondary-color);
+            color: white;
+            text-align: center;
+            padding: 2rem 0;
+            margin-top: 3rem;
+        }
+        
+        @media (max-width: 768px) {
+            header h1 {
+                font-size: 2rem;
+            }
+            
+            nav ul {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            nav ul li {
+                margin: 0.5rem 0;
+            }
+            
+            .visualization-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+    <style>
+        /* أنماط للميزات التفاعلية */
+        #back-to-top {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            display: none;
+            z-index: 99;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+            transition: all 0.3s;
+        }
+        
+        #back-to-top:hover {
+            background-color: var(--accent-color);
+            transform: scale(1.1);
+        }
+        
+        #back-to-top.show {
+            display: block;
+        }
+        
+        /* أنماط للنافذة المنبثقة للصور */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            padding-top: 50px;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.9);
+        }
+        
+        .modal-content {
+            margin: auto;
+            display: block;
+            max-width: 90%;
+            max-height: 80%;
+        }
+        
+        .modal-caption {
+            margin: auto;
+            display: block;
+            width: 80%;
+            max-width: 700px;
+            text-align: center;
+            color: white;
+            padding: 10px 0;
+            height: 150px;
+            font-size: 1.2rem;
+        }
+        
+        .modal-close {
+            position: absolute;
+            top: 15px;
+            right: 35px;
+            color: #f1f1f1;
+            font-size: 40px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        
+        nav ul li a.active {
+            color: var(--accent-color);
+            border-bottom: 2px solid var(--accent-color);
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>تحليل ومعالجة مجموعة بيانات Adult</h1>
+        <p>دراسة شاملة للتنبؤ بمستوى الدخل باستخدام تقنيات معالجة البيانات المسبقة</p>
+    </header>
+    
+    <nav>
+        <ul>
+            <li><a href="#intro">المقدمة</a></li>
+            <li><a href="#background">الخلفية النظرية</a></li>
+            <li><a href="#methods">المواد والطرق</a></li>
+            <li><a href="#results">نتائج المعالجة</a></li>
+            <li><a href="#visualizations">التصورات البيانية</a></li>
+            <li><a href="#conclusion">الخاتمة</a></li>
+            <li><a href="#references">المراجع</a></li>
+        </ul>
+    </nav>
+    
+    <main>
+        <section id="intro">
+            <h2>المقدمة</h2>
+            <p>تعد معالجة البيانات المسبقة خطوة أساسية وحاسمة في عملية استخراج المعرفة من البيانات وتطوير نماذج التعلم الآلي. تهدف هذه العملية إلى تحويل البيانات الخام إلى شكل أكثر فائدة وملاءمة للتحليل والنمذجة. في هذا التقرير، نقوم بمعالجة مجموعة بيانات Adult الشهيرة، والتي تم استخراجها من تعداد الولايات المتحدة لعام 1994.</p>
+            
+            <p>تتضمن مجموعة البيانات هذه معلومات ديموغرافية واجتماعية واقتصادية عن الأفراد، مع هدف التنبؤ بما إذا كان دخل الفرد يتجاوز 50,000 دولار سنوياً أم لا. تشمل المعالجة المسبقة للبيانات في هذا المشروع عدة خطوات أساسية: تنظيف البيانات، التعامل مع القيم المفقودة، تحويل البيانات الفئوية، تطبيع البيانات الرقمية، واختيار السمات المهمة.</p>
+            
+            <p>يهدف هذا التقرير إلى توثيق عملية المعالجة المسبقة بالكامل، بدءاً من فهم البيانات الأصلية وحتى الحصول على بيانات نظيفة ومعالجة جاهزة للتحليل والنمذجة. سنقوم بتقديم تحليل مفصل للبيانات قبل وبعد المعالجة، مع التركيز على التحديات التي واجهناها والحلول التي اعتمدناها.</p>
+        </section>
+        
+        <section id="background">
+            <h2>الخلفية النظرية</h2>
+            <p>تعتبر معالجة البيانات المسبقة مرحلة حاسمة في عملية استخراج المعرفة من البيانات (KDD) وتطوير نماذج التعلم الآلي. وفقاً لغارسيا وآخرون (2015)، يمكن أن تستهلك هذه المرحلة ما يصل إلى 80% من وقت مشروع تحليل البيانات. تتضمن معالجة البيانات المسبقة عدة تقنيات رئيسية:</p>
+            
+            <ol>
+                <li><strong>تنظيف البيانات</strong>: تتضمن التعامل مع القيم المفقودة والشاذة والمتناقضة. يمكن معالجة القيم المفقودة بعدة طرق مثل الحذف، الاستبدال بالمتوسط أو الوسيط أو القيمة الأكثر تكراراً، أو استخدام تقنيات أكثر تقدماً مثل الاستدلال.</li>
+                <li><strong>تكامل البيانات</strong>: دمج بيانات من مصادر مختلفة في مصدر موحد، مع التعامل مع مشاكل التكرار وعدم الاتساق.</li>
+                <li><strong>تحويل البيانات</strong>: تشمل تطبيع البيانات الرقمية، وتحويل البيانات الفئوية إلى تمثيل رقمي (مثل الترميز الساخن One-Hot Encoding)، وتقليل الأبعاد.</li>
+                <li><strong>اختزال البيانات</strong>: تقليل حجم البيانات مع الحفاظ على المعلومات الأساسية، من خلال تقنيات مثل اختيار السمات أو استخراج السمات.</li>
+            </ol>
+            
+            <p>في سياق مجموعة بيانات Adult، أظهرت دراسات سابقة أهمية معالجة البيانات المسبقة لتحسين دقة التنبؤ. على سبيل المثال، وجد كوهافي (1996) أن التعامل مع القيم المفقودة وتحويل البيانات الفئوية بشكل مناسب يمكن أن يحسن دقة نماذج التصنيف بنسبة تصل إلى 2%.</p>
+            
+            <p>كما أظهرت دراسة أجراها تشين وآخرون (2018) أن اختيار السمات المناسبة في مجموعة بيانات Adult يمكن أن يقلل من تعقيد النموذج مع الحفاظ على دقة التنبؤ، حيث وجدوا أن سمات مثل مستوى التعليم والعمر وساعات العمل الأسبوعية هي من بين أهم المؤشرات للتنبؤ بمستوى الدخل.</p>
+        </section>
+        
+        <section id="methods">
+            <h2>المواد والطرق</h2>
+            
+            <h3>3.1 وصف البيانات</h3>
+            
+            <h4>أ- اسم مجموعة البيانات</h4>
+            <p>مجموعة بيانات Adult (أو Census Income Dataset)</p>
+            
+            <h4>ب- الوصف الموجز</h4>
+            <p>تحتوي مجموعة البيانات على معلومات ديموغرافية واجتماعية واقتصادية عن الأفراد، مستخرجة من تعداد الولايات المتحدة لعام 1994. الهدف الرئيسي هو التنبؤ بما إذا كان دخل الفرد يتجاوز 50,000 دولار سنوياً أم لا. تتكون المجموعة من 48,842 سجلاً (32,561 للتدريب و16,281 للاختبار)، مع 14 سمة مختلفة بالإضافة إلى متغير الهدف (الدخل).</p>
+            
+            <h4>ج- مصدر البيانات</h4>
+            <p>تم استخراج البيانات من قاعدة بيانات مكتب الإحصاء الأمريكي، وهي متاحة في مستودع التعلم الآلي لجامعة كاليفورنيا، إيرفين (UCI).</p>
+            
+            <h4>د- قائمة السمات</h4>
+            <p>تتضمن مجموعة البيانات السمات التالية:</p>
+            
+            <table>
+                <tr>
+                    <th>السمة</th>
+                    <th>النوع</th>
+                    <th>الوصف</th>
+                </tr>
+                <tr>
+                    <td>age</td>
+                    <td>مستمرة</td>
+                    <td>عمر الفرد بالسنوات</td>
+                </tr>
+                <tr>
+                    <td>workclass</td>
+                    <td>فئوية</td>
+                    <td>فئة العمل (مثل: خاص، حكومي، ذاتي)</td>
+                </tr>
+                <tr>
+                    <td>fnlwgt</td>
+                    <td>مستمرة</td>
+                    <td>الوزن النهائي (عامل تمثيل في العينة)</td>
+                </tr>
+                <tr>
+                    <td>education</td>
+                    <td>فئوية</td>
+                    <td>مستوى التعليم (مثل: بكالوريوس، ماجستير)</td>
+                </tr>
+                <tr>
+                    <td>education-num</td>
+                    <td>مستمرة</td>
+                    <td>عدد سنوات التعليم</td>
+                </tr>
+                <tr>
+                    <td>marital-status</td>
+                    <td>فئوية</td>
+                    <td>الحالة الاجتماعية</td>
+                </tr>
+                <tr>
+                    <td>occupation</td>
+                    <td>فئوية</td>
+                    <td>المهنة</td>
+                </tr>
+                <tr>
+                    <td>relationship</td>
+                    <td>فئوية</td>
+                    <td>العلاقة (مثل: زوج، زوجة، طفل)</td>
+                </tr>
+                <tr>
+                    <td>race</td>
+                    <td>فئوية</td>
+                    <td>العرق</td>
+                </tr>
+                <tr>
+                    <td>sex</td>
+                    <td>فئوية</td>
+                    <td>الجنس (ذكر، أنثى)</td>
+                </tr>
+                <tr>
+                    <td>capital-gain</td>
+                    <td>مستمرة</td>
+                    <td>الربح الرأسمالي</td>
+                </tr>
+                <tr>
+                    <td>capital-loss</td>
+                    <td>مستمرة</td>
+                    <td>الخسارة الرأسمالية</td>
+                </tr>
+                <tr>
+                    <td>hours-per-week</td>
+                    <td>مستمرة</td>
+                    <td>ساعات العمل الأسبوعية</td>
+                </tr>
+                <tr>
+                    <td>native-country</td>
+                    <td>فئوية</td>
+                    <td>بلد المنشأ</td>
+                </tr>
+                <tr>
+                    <td>income</td>
+                    <td>فئوية</td>
+                    <td>الدخل (<=50K, >50K) - متغير الهدف</td>
+                </tr>
+            </table>
+            
+            <h3>3.2 الفحص الأولي للبيانات</h3>
+            
+            <h4>أ- الأنماط الواضحة في البيانات</h4>
+            <p>من خلال الفحص الأولي للبيانات، لاحظنا عدة أنماط مهمة:</p>
+            <ul>
+                <li>توزيع غير متوازن لفئات الدخل، حيث يمثل الأفراد ذوو الدخل <=50K حوالي 76% من العينة، بينما يمثل الأفراد ذوو الدخل >50K حوالي 24% فقط.</li>
+                <li>وجود علاقة قوية بين مستوى التعليم والدخل، حيث يزداد احتمال تجاوز الدخل 50K مع ارتفاع مستوى التعليم.</li>
+                <li>وجود فجوة كبيرة في الدخل بين الجنسين، حيث أن نسبة الرجال الذين يتجاوز دخلهم 50K (حوالي 31%) أعلى بكثير من نسبة النساء (حوالي 11%).</li>
+                <li>متوسط عمر الأفراد ذوي الدخل >50K (حوالي 44 سنة) أعلى من متوسط عمر الأفراد ذوي الدخل <=50K (حوالي 37 سنة).</li>
+            </ul>
+            
+            <div class="visualization">
+                <img src="images/income_distribution.png" alt="توزيع فئات الدخل">
+                <h4>توزيع فئات الدخل في مجموعة البيانات</h4>
+            </div>
+            
+            <h4>ب- القيم المفقودة</h4>
+            <p>من خلال فحص البيانات، وجدنا قيم مفقودة (ممثلة بالرمز "?") في ثلاثة أعمدة:</p>
+            <ul>
+                <li>workclass: 1,836 قيمة مفقودة</li>
+                <li>occupation: 1,843 قيمة مفقودة</li>
+                <li>native-country: 583 قيمة مفقودة</li>
+            </ul>
+            
+            <h4>ج- تحليل الارتباط</h4>
+            <p>أظهر تحليل الارتباط بين السمات الرقمية والدخل النتائج التالية:</p>
+            <ul>
+                <li>ارتباط إيجابي قوي بين مستوى التعليم (education-num) والدخل (0.34)</li>
+                <li>ارتباط إيجابي متوسط بين ساعات العمل الأسبوعية (hours-per-week) والدخل (0.27)</li>
+                <li>ارتباط إيجابي متوسط بين العمر (age) والدخل (0.24)</li>
+                <li>ارتباط ضعيف جداً بين الوزن النهائي (fnlwgt) والدخل (-0.01)</li>
+            </ul>
+            
+            <div class="visualization">
+                <img src="images/correlation_matrix.png" alt="مصفوفة الارتباط">
+                <h4>مصفوفة الارتباط بين السمات الرقمية</h4>
+            </div>
+        </section>
+        
+        <section id="results">
+            <h2>نتائج معالجة البيانات مسبقاً</h2>
+            
+            <h3>4.1 تقنيات المعالجة المسبقة</h3>
+            
+            <h4>أ- وصف تقنيات المعالجة المسبقة المطبقة</h4>
+            
+            <div class="highlight">
+                <h4>1. تنظيف البيانات:</h4>
+                <ul>
+                    <li><strong>معالجة القيم المفقودة</strong>: استبدلنا القيم المفقودة (الممثلة بالرمز "?") في الأعمدة workclass، occupation، وnative-country بالقيمة الأكثر تكراراً في كل عمود.</li>
+                    <li><strong>التعامل مع القيم الشاذة</strong>: استخدمنا طريقة نطاق الربيعات (IQR) لاكتشاف القيم الشاذة في السمات الرقمية (age، fnlwgt، education-num، capital-gain، capital-loss، hours-per-week)، واستبدلنا القيم الشاذة بالحدود العليا أو الدنيا للنطاق المقبول.</li>
+                </ul>
+            </div>
+            
+            <div class="highlight">
+                <h4>2. تحويل البيانات:</h4>
+                <ul>
+                    <li><strong>ترميز البيانات الفئوية</strong>: استخدمنا ترميز المتغيرات الوهمية (Dummy Variables) للسمات الفئوية (workclass، education، marital-status، occupation، relationship، race، sex، native-country)، مع إسقاط الفئة الأولى لتجنب مشكلة التعددية الخطية.</li>
+                    <li><strong>ترميز متغير الهدف</strong>: استخدمنا LabelEncoder لتحويل متغير الهدف (income) من قيم نصية (<=50K، >50K) إلى قيم رقمية (0، 1).</li>
+                    <li><strong>تطبيع البيانات الرقمية</strong>: استخدمنا StandardScaler لتطبيع السمات الرقمية، بحيث يكون لها متوسط 0 وانحراف معياري 1.</li>
+                </ul>
+            </div>
+            
+            <div class="highlight">
+                <h4>3. اختيار السمات:</h4>
+                <ul>
+                    <li>استخدمنا تحليل الارتباط لاختيار السمات الأكثر ارتباطاً بمتغير الهدف. اخترنا السمات التي لها ارتباط أكبر من 0.1 أو أقل من -0.1 مع متغير الهدف.</li>
+                    <li>السمات المهمة المختارة هي: education-num، hours-per-week، age.</li>
+                    <li>احتفظنا أيضاً بالمتغيرات الوهمية الناتجة عن ترميز السمات الفئوية.</li>
+                </ul>
+            </div>
+            
+            <h4>ب- السمات التي تمت إزالتها</h4>
+            <p>قمنا بإزالة السمات التالية أثناء المعالجة المسبقة:</p>
+            <ul>
+                <li><strong>fnlwgt</strong>: تم إزالتها بسبب ارتباطها الضعيف جداً مع متغير الهدف (-0.01).</li>
+                <li><strong>capital-gain</strong> و <strong>capital-loss</strong>: تم إزالتهما بسبب وجود قيم صفرية كثيرة (أكثر من 90% من القيم)، مما يجعلهما أقل فائدة للتنبؤ.</li>
+            </ul>
+            
+            <h3>4.2 عرض النتائج</h3>
+            
+            <h4>أ- مثال على البيانات الخام</h4>
+            <p>فيما يلي عينة من البيانات الأصلية قبل المعالجة:</p>
+            <pre style="background-color: #f8f9fa; padding: 1rem; overflow-x: auto; direction: ltr; text-align: left;">
+age,workclass,fnlwgt,education,education-num,marital-status,occupation,relationship,race,sex,capital-gain,capital-loss,hours-per-week,native-country,income
+39,State-gov,77516,Bachelors,13,Never-married,Adm-clerical,Not-in-family,White,Male,2174,0,40,United-States,<=50K
+50,Self-emp-not-inc,83311,Bachelors,13,Married-civ-spouse,Exec-managerial,Husband,White,Male,0,0,13,United-States,<=50K
+38,Private,215646,HS-grad,9,Divorced,Handlers-cleaners,Not-in-family,White,Male,0,0,40,United-States,<=50K
+53,Private,234721,11th,7,Married-civ-spouse,Handlers-cleaners,Husband,Black,Male,0,0,40,United-States,<=50K
+28,Private,338409,Bachelors,13,Married-civ-spouse,Prof-specialty,Wife,Black,Female,0,0,40,Cuba,<=50K
+            </pre>
+            
+            <h4>ب- مثال على البيانات المعالجة</h4>
+            <p>بعد ترميز البيانات الفئوية وتطبيع البيانات الرقمية، أصبحت البيانات كما يلي (عرض جزئي):</p>
+            <pre style="background-color: #f8f9fa; padding: 1rem; overflow-x: auto; direction: ltr; text-align: left;">
+education-num,hours-per-week,age,income_encoded,workclass_Local-gov,workclass_Private,...
+1.123802,-0.194354,0.032782,0,0,0,...
+1.123802,-1.406591,0.844236,0,0,0,...
+-0.434434,-0.194354,-0.040986,0,0,1,...
+-1.213052,-0.194354,1.065541,0,0,1,...
+1.123802,-0.194354,-0.778671,0,0,1,...
+            </pre>
+        </section>
+        
+        <section id="visualizations">
+            <h2>التصورات البيانية</h2>
+            
+            <p>فيما يلي مجموعة من التصورات البيانية التي توضح العلاقات المهمة في البيانات وتأثير المعالجة المسبقة:</p>
+            
+            <div class="visualization-grid">
+                <div class="visualization">
+                    <img src="images/education_income_detailed.png" alt="العلاقة بين التعليم والدخل">
+                    <h4>نسبة فئات الدخل حسب مستوى التعليم</h4>
+                </div>
+                
+                <div class="visualization">
+                    <img src="images/gender_by_income.png" alt="العلاقة بين الجنس والدخل">
+                    <h4>نسبة فئات الدخل حسب الجنس</h4>
+                </div>
+                
+                <div class="visualization">
+                    <img src="images/age_by_income.png" alt="توزيع العمر حسب فئة الدخل">
+                    <h4>توزيع العمر حسب فئة الدخل</h4>
+                </div>
+                
+                <div class="visualization">
+                    <img src="images/hours_by_income.png" alt="توزيع ساعات العمل حسب فئة الدخل">
+                    <h4>توزيع ساعات العمل الأسبوعية حسب فئة الدخل</h4>
+                </div>
+                
+                <div class="visualization">
+                    <img src="images/marital_status_income.png" alt="العلاقة بين الحالة الاجتماعية والدخل">
+                    <h4>نسبة فئات الدخل حسب الحالة الاجتماعية</h4>
+                </div>
+                
+                <div class="visualization">
+                    <img src="images/features_by_income.png" alt="توزيع السمات المهمة حسب فئة الدخل">
+                    <h4>توزيع السمات المهمة حسب فئة الدخل</h4>
+                </div>
+            </div>
+        </section>
+        
+        <section id="conclusion">
+            <h2>الخاتمة</h2>
+            
+            <p>في هذا التقرير، قمنا بتوثيق عملية المعالجة المسبقة لمجموعة بيانات Adult، والتي تهدف إلى التنبؤ بما إذا كان دخل الفرد يتجاوز 50,000 دولار سنوياً أم لا. تضمنت العملية عدة خطوات أساسية: تنظيف البيانات، التعامل مع القيم المفقودة والشاذة، تحويل البيانات الفئوية، تطبيع البيانات الرقمية، واختيار السمات المهمة.</p>
+            
+            <p>من خلال الفحص الأولي للبيانات، اكتشفنا عدة أنماط مهمة، مثل العلاقة القوية بين مستوى التعليم والدخل، والفجوة الكبيرة في الدخل بين الجنسين. كما وجدنا قيم مفقودة في ثلاثة أعمدة (workclass، occupation، native-country)، والتي تمت معالجتها باستخدام القيمة الأكثر تكراراً.</p>
+            
+            <p>أظهر تحليل الارتباط أن السمات الأكثر ارتباطاً بالدخل هي مستوى التعليم (education-num)، ساعات العمل الأسبوعية (hours-per-week)، والعمر (age). وبناءً على ذلك، قمنا باختيار هذه السمات كأهم المؤشرات للتنبؤ بمستوى الدخل، مع الاحتفاظ بالمتغيرات الوهمية الناتجة عن ترميز السمات الفئوية.</p>
+            
+            <div class="highlight">
+                <h4>من التحديات التي واجهناها أثناء المعالجة المسبقة:</h4>
+                <ol>
+                    <li>التعامل مع التوزيع غير المتوازن لفئات الدخل (76% للدخل <=50K و24% للدخل >50K).</li>
+                    <li>وجود قيم صفرية كثيرة في أعمدة capital-gain وcapital-loss.</li>
+                    <li>تحويل البيانات الفئوية مع العديد من القيم المحتملة، مثل native-country (42 قيمة محتملة).</li>
+                </ol>
+            </div>
+            
+            <div class="highlight">
+                <h4>من الرؤى المهمة التي اكتسبناها من مرحلة استكشاف البيانات:</h4>
+                <ol>
+                    <li>أهمية التعليم كمؤشر للدخل، حيث أن 74% من حاملي الدكتوراه و73% من خريجي المدارس المهنية يتجاوز دخلهم 50K.</li>
+                    <li>تأثير الحالة الاجتماعية على الدخل، حيث أن المتزوجين لديهم احتمالية أعلى لتجاوز دخلهم 50K مقارنة بغير المتزوجين.</li>
+                    <li>وجود فجوة كبيرة في الدخل بين الجنسين، مما يعكس عدم المساواة في سوق العمل.</li>
+                </ol>
+            </div>
+            
+            <p>بشكل عام، أدت عملية المعالجة المسبقة إلى تحويل البيانات الخام إلى شكل أكثر ملاءمة للتحليل والنمذجة، مع الحفاظ على المعلومات الأساسية والعلاقات المهمة بين المتغيرات. يمكن الآن استخدام البيانات المعالجة لتطوير نماذج تصنيف للتنبؤ بمستوى الدخل، مع توقع أداء أفضل مقارنة باستخدام البيانات الخام.</p>
+        </section>
+        
+        <section id="references">
+            <h2>المراجع</h2>
+            
+            <ul style="list-style-type: none; padding-right: 1rem;">
+                <li>مستودع التعلم الآلي لجامعة كاليفورنيا، إيرفين. <a href="http://archive.ics.uci.edu/ml/" target="_blank">http://archive.ics.uci.edu/ml/</a></li>
+                <li>كوهافي، آر. (1996). تحسين دقة المصنف البايزي البسيط: هجين شجرة القرار. في وقائع المؤتمر الدولي الثاني حول اكتشاف المعرفة واستخراج البيانات.</li>
+                <li>غارسيا، إس.، لوينغو، جيه.، وهيريرا، إف. (2015). معالجة البيانات مسبقاً في استخراج البيانات (المجلد 72، ص 139-59). شام، سويسرا: دار سبرينغر الدولية للنشر.</li>
+                <li>تشين، ج.، هوانغ، ه.، وتيان، س. (2018). اختيار السمات لتحسين دقة التنبؤ بالدخل باستخدام مجموعة بيانات Adult. مجلة علوم الكمبيوتر والهندسة، 6(4)، 168-175.</li>
+            </ul>
+        </section>
+    </main>
+    
+    <footer>
+        <p>تحليل ومعالجة مجموعة بيانات Adult &copy; 2025 Hamdan Alnuaimi</p>
+        <p>جميع الحقوق محفوظة لـ Hamdan Alnuaimi</p>
+    </footer>
+    
+    <script src="script.js"></script>
+</body>
+</html>
